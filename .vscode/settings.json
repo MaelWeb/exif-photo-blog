@@ -76,5 +76,6 @@
   ],
   "files.associations": {
     "*.css": "tailwindcss"
-  }
+  },
+  "svg.preview.background": "transparent"
 }

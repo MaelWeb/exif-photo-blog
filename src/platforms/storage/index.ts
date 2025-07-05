@@ -107,6 +107,7 @@ export const fileNameForStorageUrl = (url: string) => {
     case 'aws-s3':
       return url.replace(`${AWS_S3_BASE_URL}/`, '');
     case 'qiniu':
+      // 对于七牛云，返回完整的文件路径（包含 exif-photo-blog 目录）
       return url.replace(`${QINIU_BASE_URL_PUBLIC}/`, '');
     default:
       return url;
@@ -134,10 +135,18 @@ export const uploadFromClientViaPresignedUrl = async (
   return fetch(url, { method: 'PUT', body: file }).then(() => `${baseUrlForStorage(CURRENT_STORAGE)}/${key}`);
 };
 
-export const uploadPhotoFromClient = async (file: File | Blob, extension = 'jpg') =>
-  CURRENT_STORAGE === 'cloudflare-r2' || CURRENT_STORAGE === 'aws-s3' || CURRENT_STORAGE === 'qiniu'
-    ? uploadFromClientViaPresignedUrl(file, PREFIX_UPLOAD, extension, true)
-    : vercelBlobUploadFromClient(file, `${PREFIX_UPLOAD}.${extension}`);
+export const uploadPhotoFromClient = async (file: File | Blob, extension = 'jpg') => {
+  if (CURRENT_STORAGE === 'qiniu') {
+    // 七牛云使用后端 API 上传，避免 CORS 问题
+    return qiniuUploadFromClient(file, `${PREFIX_UPLOAD}.${extension}`);
+  } else if (CURRENT_STORAGE === 'cloudflare-r2' || CURRENT_STORAGE === 'aws-s3') {
+    // AWS S3 和 Cloudflare R2 使用预签名 URL
+    return uploadFromClientViaPresignedUrl(file, PREFIX_UPLOAD, extension, true);
+  } else {
+    // Vercel Blob 使用其原生上传
+    return vercelBlobUploadFromClient(file, `${PREFIX_UPLOAD}.${extension}`);
+  }
+};
 
 export const putFile = (file: Buffer, fileName: string) => {
   switch (CURRENT_STORAGE) {

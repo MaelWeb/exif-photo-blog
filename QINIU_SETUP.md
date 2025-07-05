@@ -71,7 +71,13 @@ NEXT_PUBLIC_STORAGE_PREFERENCE=qiniu
 - ✅ 文件列表
 - ✅ 图片优化和缓存
 
-### 3.2 安全特性
+### 3.2 文件存储结构
+
+- 所有文件都存储在 `exif-photo-blog/` 目录下
+- 上传的文件路径格式：`exif-photo-blog/upload-{id}.{ext}`
+- 照片文件路径格式：`exif-photo-blog/photo-{id}.{ext}`
+
+### 3.3 安全特性
 
 - 身份验证保护
 - 文件类型验证
