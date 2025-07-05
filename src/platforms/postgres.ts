@@ -4,15 +4,12 @@ import { Pool, QueryResult, QueryResultRow } from 'pg';
 
 const pool = new Pool({
   connectionString: removeParamsFromUrl(process.env.POSTGRES_URL, ['sslmode']),
-  ...POSTGRES_SSL_ENABLED && { ssl: true },
+  ...(POSTGRES_SSL_ENABLED && { ssl: true }),
 });
 
 export type Primitive = string | number | boolean | undefined | null;
 
-export const query = async <T extends QueryResultRow = any>(
-  queryString: string,
-  values: Primitive[] = [],
-) => {
+export const query = async <T extends QueryResultRow = any>(queryString: string, values: Primitive[] = []) => {
   const client = await pool.connect();
   let response: QueryResult<T>;
   try {
@@ -25,10 +22,7 @@ export const query = async <T extends QueryResultRow = any>(
   return response;
 };
 
-export const sql = <T extends QueryResultRow>(
-  strings: TemplateStringsArray,
-  ...values: Primitive[]
-) => {
+export const sql = <T extends QueryResultRow>(strings: TemplateStringsArray, ...values: Primitive[]) => {
   if (!isTemplateStringsArray(strings) || !Array.isArray(values)) {
     throw new Error('Invalid template literal argument');
   }
@@ -44,22 +38,18 @@ export const sql = <T extends QueryResultRow>(
 
 export const convertArrayToPostgresString = (
   array?: string[],
-  type: 'braces' | 'brackets' | 'parentheses' = 'braces', 
-) => array
-  ? type === 'braces'
-    ? `{${array.join(',')}}`
-    : type === 'brackets'
-      ? `[${array.map(i => `'${i}'`).join(',')}]`
-      : `(${array.map(i => `'${i}'`).join(',')})`
-  : null;
+  type: 'braces' | 'brackets' | 'parentheses' = 'braces'
+) =>
+  array
+    ? type === 'braces'
+      ? `{${array.join(',')}}`
+      : type === 'brackets'
+      ? `[${array.map((i) => `'${i}'`).join(',')}]`
+      : `(${array.map((i) => `'${i}'`).join(',')})`
+    : null;
 
-const isTemplateStringsArray = (
-  strings: unknown,
-): strings is TemplateStringsArray => {
-  return (
-    Array.isArray(strings) && 'raw' in strings && Array.isArray(strings.raw)
-  );
+const isTemplateStringsArray = (strings: unknown): strings is TemplateStringsArray => {
+  return Array.isArray(strings) && 'raw' in strings && Array.isArray(strings.raw);
 };
 
-export const testDatabaseConnection = async () =>
-  query('SELECt COUNT(*) FROM pg_stat_user_tables');
+export const testDatabaseConnection = async () => query('SELECt COUNT(*) FROM pg_stat_user_tables');
