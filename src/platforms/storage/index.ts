@@ -94,7 +94,7 @@ const PREFIX_PHOTO = 'photo';
 
 export const generateRandomFileNameForPhoto = () => `${PREFIX_PHOTO}-${generateStorageId()}`;
 
-const REGEX_UPLOAD_PATH = new RegExp(`(?:${PREFIX_UPLOAD})\.[a-z]{1,4}`, 'i');
+const REGEX_UPLOAD_PATH = new RegExp(`(?:${PREFIX_UPLOAD})(?:-[a-z0-9]+)?\.[a-z]{1,4}`, 'i');
 
 const REGEX_UPLOAD_ID = new RegExp(`.${PREFIX_UPLOAD}-([a-z0-9]+)\.[a-z]{1,4}$`, 'i');
 
@@ -138,13 +138,17 @@ export const uploadFromClientViaPresignedUrl = async (
 export const uploadPhotoFromClient = async (file: File | Blob, extension = 'jpg') => {
   if (CURRENT_STORAGE === 'qiniu') {
     // 七牛云使用后端 API 上传，避免 CORS 问题
-    return qiniuUploadFromClient(file, `${PREFIX_UPLOAD}.${extension}`);
+    // 添加随机后缀确保文件名唯一性
+    const fileNameWithSuffix = `${PREFIX_UPLOAD}-${generateStorageId()}.${extension}`;
+    return qiniuUploadFromClient(file, fileNameWithSuffix);
   } else if (CURRENT_STORAGE === 'cloudflare-r2' || CURRENT_STORAGE === 'aws-s3') {
     // AWS S3 和 Cloudflare R2 使用预签名 URL
     return uploadFromClientViaPresignedUrl(file, PREFIX_UPLOAD, extension, true);
   } else {
     // Vercel Blob 使用其原生上传
-    return vercelBlobUploadFromClient(file, `${PREFIX_UPLOAD}.${extension}`);
+    // 添加随机后缀确保文件名唯一性（虽然 Vercel Blob API 会自动添加，但为了保持一致性）
+    const fileNameWithSuffix = `${PREFIX_UPLOAD}-${generateStorageId()}.${extension}`;
+    return vercelBlobUploadFromClient(file, fileNameWithSuffix);
   }
 };
 
